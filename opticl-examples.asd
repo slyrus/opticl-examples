@@ -35,6 +35,7 @@
    (:object-xhtml-file :opticl-examples-xhtml
                        :pathname #p"opticl-examples.xhtml"
                        :depends-on (:opticl-examples-html-filtered-sexp)
-                       :input-object :opticl-examples-html-filtered-sexp)))
+                       :input-object :opticl-examples-html-filtered-sexp)
+   (:module "images")))
 
 

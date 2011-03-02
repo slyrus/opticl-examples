@@ -40,7 +40,7 @@
                            (asdf:find-system "opticl-examples")))))
     (ensure-directories-exist output-directory)
     (defun output-image (filename)
-      (reduce #'merge-pathnames filename output-directory)))
+      (merge-pathnames filename output-directory)))
   })
  
  (:h2 "Making Some (Small) Images")
@@ -121,13 +121,12 @@
 
   (defun write-circle-images ()
     (let ((img (example-circles)))
-      (write-png-file "examples/output/circles.png" img)))
+      (write-png-file (output-image "circles.png") img)))
   
   (defparameter *circles* (write-circle-images))
   })
  
  (:image
   (:lisp-value
-   #q{(enough-namestring *circles*
-                         (asdf:component-pathname (asdf:find-system :opticl-examples)))})))
+   #q{*circles*})))
 
