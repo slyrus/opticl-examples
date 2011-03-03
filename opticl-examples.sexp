@@ -78,7 +78,7 @@
       (write-jpeg-file out *truck-image*)))
   })
 
- (:image (:lisp-value #q{(namestring *truck-jpeg-file*)}))
+ (:image (:lisp-value #q{*truck-jpeg-file*}))
  
  (:h2 "Resizing an image")
 
@@ -95,7 +95,112 @@
   })
 
  (:image (:lisp-value #q{(namestring *resized-truck-jpeg-file*)}))
+
+ (:h2 "Affine Transformations")
+
+ (:p #q{Resizing an image is a special case of applying an affine
+     transformation to an image. An affine transformation can be thought
+     of as a composition of zero or more linear operations of rotating,
+     scaling, shearing or shifting an image. Each point (y, x) in the
+     original image gets mapped to a new point (y', x') in the new
+     image. This mapping can be thought of as being represented by two
+     functions, both of which have the general form f(y, x) = ay + bx +
+     c. There are two functions as one yields the y coordinate and the
+     other yields the x coordinate, although both functions take both x
+     and y coordinates as arguments. The ay + bx aspect of the
+     transformation functions is easily modeled by a 2x2 matrix -- but the
+     + c part is a bit tricker. But if we want to represent the
+     transformation as a matrix (which we do) and we want to use matrix
+     multiplication to yield the new coordinates, we need to employ a
+     trick of converting the 2 coordinate value (y, x) into so-called
+     homogenous coordinates (y, x, 1) and then multiply this by a 3x3
+     matrix in which contains the 2x2 matrix above, along with a 1 on the
+     third diagonal position and appropriate values representing the +c
+     portions of the above equations in the proper positions such that
+     when the coordinated is multiplied by the matrix, the constants are
+     added to the appropriate coordinates -- the other 2 remaining values
+     become 0. The only trick about this is which values get 0 and which
+     get the two constant values? Well, it depends if we are multiplying
+     our 3 (remember we converted from 2 to 3 a moment ago, by adding a 1
+                     in the third position) coordinates, taken as a row vector, by the 3x3
+     matrix, or if we are post-multiplying the 3x3 transformation matrix
+     by a 3-element column vector. The two approaches are equivalent, but
+     we need to be a little careful as matrix multiplication isn't
+     commutative. Fortunately, AB = T(T(B)T(A)), that is A times B is
+     equal to the transpose of the transpose of B times the transpose of
+     A. The beauty of all of this math is that we can compose linear
+     transformations such that the constant transformations are
+     premultiplied, and then post-multiply that composed transformation by
+     our data (expressed as column vectors). This means that we can
+     compose transformations thusly:})
+
+ (:lisp-no-eval
+  #q{
+  ...
+  (let ((composed
+         ;; recall that the order of the transformations matter, and
+         ;; that the transform that we (conceptually) wish to apply
+         ;; first, must be last to be multiplied
+         (reduce #'matrix-multiply (reverse (list pre-shift rotate post-shift)))))
+    (transform-image img composed))
+  ...
+  })
+
+ (:p "But picking the appropriate values for the transformation matrix
+ can be a bit tricky. To help with the process there is a function
+ called " (:code "make-affine-transformation") ", which takes as
+ keyword arguments " (:code "y-shift, x-shift, theta, y-scale,
+ x-scale, y-shear and x-shear") ". These seven parameters are then
+ converted into a 6-parameter 3x3 (recall that three of the values in
+ the matrix are taken by the two zeroes and the one in the 3rd
+ diagonal position), which can then by passed to
+ the " (:code "transform-image" " function."))
  
+ (:p "Let's see this in action. First, we'll make a small image to play with:")
+
+ (:lisp
+  #q{
+  (defparameter *cropped-salad*
+    (crop-image (read-jpeg-file (example-image "salad.jpg")) 400 200 600 400))
+
+  (defparameter *cropped-salad-file*
+    (write-png-file (output-image "cropped-salad.png") *cropped-salad*))
+  })
+ 
+ (:image (:lisp-value #q{*cropped-salad-file*}))
+
+ (:p "Now we'll apply some transformations to it:")
+ 
+ (:lisp
+  #q{
+  (defparameter *squashed-salad-file*
+    (let ((transform (make-affine-transformation :x-scale 1.5d0 :y-scale .75d0)))
+      (let ((bigimg
+             (transform-image *cropped-salad* transform :interpolate :bilinear)))
+        (write-png-file (output-image "salad-big.png") bigimg))))
+  })
+ 
+ (:image (:lisp-value #q{*squashed-salad-file*}))
+ 
+ (:p "Next, we'll apply a more radical transformation:")
+
+ (:lisp
+  #q{
+  (defparameter *salad-trans-file*
+    (let ((transform (make-affine-transformation
+                      :x-scale 0.7d0 :y-scale 1.1d0
+                      :x-shear 1.3d0 :y-shear 1.8d0
+                      :theta (* -45.0d0 (/ 180.0d0) pi)
+                      :x-shift 40 :y-shift 40)))
+      (let ((transimg
+             (transform-image *cropped-salad* transform :interpolate :bilinear)))
+        (write-png-file (output-image "salad-trans.png") transimg))))
+  })
+
+ (:image (:lisp-value #q{*salad-trans-file*}))
+ 
+ (:h2 "Discrete Convolution")
+
  (:h2 "Drawing Circles")
 
  (:lisp
