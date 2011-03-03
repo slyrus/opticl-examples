@@ -201,6 +201,38 @@
  
  (:h2 "Discrete Convolution")
 
+ (:lisp
+  #q{
+  (defparameter *truck*
+         (read-jpeg-file (example-image "truck.jpeg")))
+  })
+ 
+ (:h3 "Blur")
+
+ (:lisp
+  #q{
+  (defparameter *blurred-truck-file*
+    (write-png-file
+     (output-image "truck-blur.png")
+     (blur-image *truck*)))
+  })
+ 
+ (:image (:lisp-value #q{*blurred-truck-file*}))
+ 
+ (:h3 "Sharpen")
+ 
+ (:lisp
+  #q{
+  (defparameter *sharpened-truck-file*
+    (write-png-file
+     (output-image "truck-sharpen.png")
+     (sharpen-image *truck*)))
+  })
+ 
+ (:image (:lisp-value #q{*sharpened-truck-file*}))
+ 
+ (:h3 "Custom Convolution Kernels")
+ 
  (:h2 "Drawing Circles")
 
  (:lisp
